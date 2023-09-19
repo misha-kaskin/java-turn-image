@@ -12,6 +12,8 @@ public class TurnImage {
     static final int COLOR_SIZE = 3;
 
     public static void main(String[] args) throws IOException {
+        /* Считывание из файла в двумерный массив */
+
         String imagePath = "";
 
         if (args.length > 0) {
@@ -31,6 +33,8 @@ public class TurnImage {
         for (int i = 0; i < height; i++) {
             imageBitMap[i] = Arrays.copyOfRange(data1, 3 * i * width, 3 * (i + 1) * width);
         }
+
+        /* Рассчет крайних точек (верхней, правой, левой, нижней) */
 
         Point high = new Point(Integer.MAX_VALUE, Integer.MAX_VALUE);
         Point low = new Point(-1, -1);
@@ -83,12 +87,16 @@ public class TurnImage {
         high.x = left.x + (right.x - low.x);
         high.y = left.y - (low.y - right.y);
 
+        /* Расчет угла поворота и размеров исходного изображения */
+
         double alpha = rightAlpha;
 
         int srcImgWidth = (int) sqrt(pow(right.x / 3 - high.x / 3, 2) + pow(right.y - high.y, 2));
         int srcImgHeight = (int) sqrt(pow(left.x / 3 - high.x / 3, 2) + pow(left.y - high.y, 2));
 
         int[][] newImg = new int[srcImgHeight][3 * srcImgWidth];
+
+        /* Поворот изображения */
 
         for (int i = 0; i < srcImgHeight; i++) {
             int startX = high.x - (int) (sqrt(pow(i, 2) / (1 + pow(tan(alpha), 2))) * 3 * tan(alpha));
@@ -100,6 +108,8 @@ public class TurnImage {
                 newImg[i][j] = imageBitMap[startY + dy][startX + dx];
             }
         }
+
+        /* Запись данных в файл */
 
         int[] resImg = new int[3 * srcImgHeight * srcImgWidth];
 
