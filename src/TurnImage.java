@@ -12,14 +12,20 @@ public class TurnImage {
     static final int COLOR_SIZE = 3;
 
     public static void main(String[] args) throws IOException {
-        String imagePath = "Новый точечный рисунок.bmp";
+        String imagePath = "";
+
+        if (args.length > 0) {
+            imagePath = args[0];
+        } else {
+            throw new IllegalArgumentException("Введите название файла");
+        }
+
         BufferedImage myPicture = ImageIO.read(new File(imagePath));
 
         int width = myPicture.getWidth();
         int height = myPicture.getHeight();
         Raster data = myPicture.getData();
         int[] data1 = data.getPixels(0, 0, width, height, new int[3 * width * height]);
-
         int[][] imageBitMap = new int[height][COLOR_SIZE * width];
 
         for (int i = 0; i < height; i++) {
@@ -31,12 +37,11 @@ public class TurnImage {
         Point left = new Point(Integer.MAX_VALUE, Integer.MAX_VALUE);
         Point right = new Point(-1, -1);
 
-
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < 3 * width; j += 3) {
-                if (imageBitMap[i][j] == 0
-                        && imageBitMap[i][j + 1] == 0
-                        && imageBitMap[i][j + 2] == 0) {
+                if (imageBitMap[i][j] < 20
+                        && imageBitMap[i][j + 1] < 20
+                        && imageBitMap[i][j + 2] < 20) {
                     if (j > right.x) {
                         right.x = j;
                         right.y = i;
@@ -57,9 +62,28 @@ public class TurnImage {
             }
         }
 
-        double sinAlpha = (right.y - high.y)
-                / sqrt(pow(right.x / 3 - high.x / 3, 2) + pow(right.y - high.y, 2));
-        double alpha = asin(sinAlpha);
+        double rightSinAlpha = (right.x - low.x)
+                / sqrt(pow((double) right.x / 3 - (double) low.x / 3, 2) + pow(right.y - low.y, 2)) / 3;
+        double rightAlpha = asin(rightSinAlpha);
+
+        int x = 0;
+        int y = 0;
+
+        int dlt = 20;
+
+        right.x = x = width * 3 - dlt;
+        right.y = y = (int) (x / 3 * tan(rightAlpha));
+
+        low.x = x = 3 * width - 3 * (int) ((height - dlt - y) * tan(rightAlpha));
+        low.y = y = height - dlt;
+
+        left.y = height - (int) ((x / 3 - dlt) * tan(rightAlpha));
+        left.x = x = dlt;
+
+        high.x = left.x + (right.x - low.x);
+        high.y = left.y - (low.y - right.y);
+
+        double alpha = rightAlpha;
 
         int srcImgWidth = (int) sqrt(pow(right.x / 3 - high.x / 3, 2) + pow(right.y - high.y, 2));
         int srcImgHeight = (int) sqrt(pow(left.x / 3 - high.x / 3, 2) + pow(left.y - high.y, 2));
@@ -90,7 +114,10 @@ public class TurnImage {
         BufferedImage bufferedImage1 = new BufferedImage(srcImgWidth, srcImgHeight, BufferedImage.TYPE_INT_RGB);
         bufferedImage1.setData(compatibleWritableRaster);
 
-        ImageIO.write(bufferedImage1, "bmp", new File("Новый точечный рисунок1.bmp"));
+        ImageIO.write(bufferedImage1,
+                "bmp",
+                new File(imagePath.split("\\.")[0] + "-turned.bmp")
+        );
     }
 
     static class Point {
