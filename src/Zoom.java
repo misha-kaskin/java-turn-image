@@ -201,23 +201,6 @@ public class Zoom {
         double b = (-y1 - 6 * c) / 4;
         double a = x1 - b - c;
 
-//        if ((Math.abs(27 * a + 9 * b + 3 * c + d - color4) < 0.1
-//                || Math.abs(8 * a + 4 * b + 2 * c + d - color3) < 0.1
-//                || Math.abs(a + b + c + d - color3) < 0.1
-//                || Math.abs(d - color1) < 0.1) && count++ < 5000) {
-//            System.out.println(color1);
-//            System.out.println(color2);
-//            System.out.println(color3);
-//            System.out.println(color4);
-//
-//            System.out.println(a);
-//            System.out.println(b);
-//            System.out.println(c);
-//            System.out.println(d);
-//
-//            System.out.println("//////////////////////////////////");
-//        }
-
         return new Matrix(a, b, c, d);
     }
 
