@@ -100,7 +100,7 @@ public class TurnImage {
         high = A;
         right = B;
         low = C;
-        left = D;
+                left = D;
 
         /* Расчет угла поворота и размеров исходного изображения */
 
