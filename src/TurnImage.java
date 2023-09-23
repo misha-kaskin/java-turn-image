@@ -9,8 +9,6 @@ import java.util.Arrays;
 import static java.lang.Math.*;
 
 public class TurnImage {
-    static final int COLOR_SIZE = 3;
-
     public static void main(String[] args) throws IOException {
         /* Считывание из файла в двумерный массив */
 
@@ -19,7 +17,7 @@ public class TurnImage {
         if (args.length > 0) {
             imagePath = args[0];
         } else {
-            throw new IllegalArgumentException("Введите название файла");
+            imagePath = "img.bmp";
         }
 
         BufferedImage myPicture = ImageIO.read(new File(imagePath));
@@ -28,7 +26,7 @@ public class TurnImage {
         int height = myPicture.getHeight();
         Raster data = myPicture.getData();
         int[] data1 = data.getPixels(0, 0, width, height, new int[3 * width * height]);
-        int[][] imageBitMap = new int[height][COLOR_SIZE * width];
+        int[][] imageBitMap = new int[height][3 * width];
 
         for (int i = 0; i < height; i++) {
             imageBitMap[i] = Arrays.copyOfRange(data1, 3 * i * width, 3 * (i + 1) * width);
@@ -43,9 +41,9 @@ public class TurnImage {
 
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < 3 * width; j += 3) {
-                if (imageBitMap[i][j] < 20
-                        && imageBitMap[i][j + 1] < 20
-                        && imageBitMap[i][j + 2] < 20) {
+                if (imageBitMap[i][j] < 70
+                        && imageBitMap[i][j + 1] < 70
+                        && imageBitMap[i][j + 2] < 70) {
                     if (j > right.x) {
                         right.x = j;
                         right.y = i;
@@ -66,30 +64,45 @@ public class TurnImage {
             }
         }
 
-        double rightSinAlpha = (right.x - low.x)
+        double sinAlpha = (right.x - low.x)
                 / sqrt(pow((double) right.x / 3 - (double) low.x / 3, 2) + pow(right.y - low.y, 2)) / 3;
-        double rightAlpha = asin(rightSinAlpha);
+        double alpha = asin(sinAlpha);
+        double tg = tan(alpha);
 
-        int x = 0;
-        int y = 0;
+        int dlt = 100;
 
-        int dlt = 20;
+        high.y -= dlt;
+        left.x -= dlt * 3;
+        right.x += dlt * 3;
+        low.y += dlt;
 
-        right.x = x = width * 3 - dlt;
-        right.y = y = (int) (x / 3 * tan(rightAlpha));
+        double xA = (left.x / tg / 3 + left.y - high.y + tg * high.x / 3) * 3
+                / (tg + 1 / tg);
+        double yA = tg * xA / 3 + high.y - tg * high.x / 3;
 
-        low.x = x = 3 * width - 3 * (int) ((height - dlt - y) * tan(rightAlpha));
-        low.y = y = height - dlt;
+        double xB = (right.x / tg / 3 + right.y - high.y + tg * high.x / 3) * 3
+                / (tg + 1 / tg);
+        double yB = tg * xB / 3 + high.y - tg * high.x / 3;
 
-        left.y = height - (int) ((x / 3 - dlt) * tan(rightAlpha));
-        left.x = x = dlt;
+        double xC = (-low.y + tg * low.x / 3 + right.x / tg / 3 + right.y) * 3
+                / (tg + 1 / tg);
+        double yC = tg * xC / 3 + low.y - tg * low.x / 3;
 
-        high.x = left.x + (right.x - low.x);
-        high.y = left.y - (low.y - right.y);
+        double xD = (left.x / tg / 3 + left.y - low.y + tg * low.x / 3) * 3
+                / (tg + 1 / tg);
+        double yD = tg * xD / 3 + low.y - tg * low.x / 3;
+
+        Point A = new Point((int) xA, (int) yA);
+        Point B = new Point((int) xB, (int) yB);
+        Point C = new Point((int) xC, (int) yC);
+        Point D = new Point((int) xD, (int) yD);
+
+        high = A;
+        right = B;
+        low = C;
+        left = D;
 
         /* Расчет угла поворота и размеров исходного изображения */
-
-        double alpha = rightAlpha;
 
         int srcImgWidth = (int) sqrt(pow(right.x / 3 - high.x / 3, 2) + pow(right.y - high.y, 2));
         int srcImgHeight = (int) sqrt(pow(left.x / 3 - high.x / 3, 2) + pow(left.y - high.y, 2));
@@ -99,12 +112,14 @@ public class TurnImage {
         /* Поворот изображения */
 
         for (int i = 0; i < srcImgHeight; i++) {
-            int startX = high.x - (int) (sqrt(pow(i, 2) / (1 + pow(tan(alpha), 2))) * 3 * tan(alpha));
-            int startY = high.y + (int) sqrt(pow(i, 2) / (1 + pow(tan(alpha), 2)));
+            int startX = high.x - (int) (sqrt(pow(i, 2) / (1 + pow(tg, 2))) * 3 * tg);
+            int startY = high.y + (int) (sqrt(pow(i, 2) / (1 + pow(tg, 2))));
+            startX = max(startX, 0);
+            startY = max(startY, 0);
 
             for (int j = 0; j < 3 * srcImgWidth; j++) {
-                int dx = (int) sqrt(pow(j, 2) / (1 + pow(tan(alpha), 2)));
-                int dy = (int) (sqrt(pow(j, 2) / (1 + pow(tan(alpha), 2))) * tan(alpha)) / 3;
+                int dx = (int) sqrt(pow(j, 2) / (1 + pow(tg, 2)));
+                int dy = (int) (sqrt(pow(j, 2) / (1 + pow(tg, 2))) * tg) / 3;
                 newImg[i][j] = imageBitMap[startY + dy][startX + dx];
             }
         }
